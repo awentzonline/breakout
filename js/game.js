@@ -44,8 +44,7 @@ Bouncer.prototype.update = function () {
   Phaser.Sprite.prototype.update.call(this);
   // handle movement
   var v = this.body.velocity;
-  var angle = Math.atan2(v.y, v.x);
-  this.rotation += Phaser.Math.normalizeAngle((angle - this.rotation)) * 0.6;
+  this.rotation = Math.atan2(v.y, v.x);
   this.animations.play('walk', this.walkFps);
 }
 
