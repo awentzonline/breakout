@@ -15,6 +15,7 @@ Preload.prototype = {
     this.load.spritesheet('suit_walk', 'assets/suit_walk_top.png', 177, 100, 8);
     this.load.image('terrain0', 'assets/ground_cobblestone4.jpg');
     this.load.image('paddle0', 'assets/paddle0.jpg');
+    this.load.image('brick0', 'assets/brick0.jpg');
   },
   create: function() {
     this.asset.cropEnabled = false;

@@ -20,6 +20,10 @@ Play.prototype = {
     this.terrain = this.game.add.tileSprite(0, 0, this.game.width, this.game.height, 'terrain0');
     this.terrain.fixedToCamera = true;
     
+    //
+    this.targetGroup = this.game.add.group();
+    this.setupTargets(400, 200, 'brick0');
+
     this.bouncer = new Bouncer(this.game, gameWidth * 0.5, gameHeight * 0.2, 'suit_walk');   
     this.bouncer.animations.add('idle', [0]);
     this.bouncer.animations.add('walk', [0,1,2,3,4,5,6,7]);
@@ -42,6 +46,8 @@ Play.prototype = {
     this.terrain.tilePosition.setTo(-this.camera.view.x, -this.camera.view.y);
 
     this.game.physics.arcade.collide(this.paddle, this.bouncer, this.bouncerOnPaddle.bind(this));
+    this.game.physics.arcade.collide(this.bouncer, this.targetGroup, this.bouncerOnTarget.bind(this));
+    this.game.debug.body(this.bouncer.body, 'rgba(255, 255, 0, 0.1)');
   },
   bouncerOnPaddle: function (paddle, bouncer) {
     var coneFactor = 0.8;
@@ -51,6 +57,9 @@ Play.prototype = {
     //dx = 1-dx;
     var angle = Math.PI * (coneFactor * dx - 0.5);
     this.bouncer.changeCourse(angle); 
+  },
+  bouncerOnTarget: function (bouncer, target) {
+    target.kill();
   },
   updateKeyControls: function () {
     var controls = this.paddle.controls;
@@ -76,6 +85,41 @@ Play.prototype = {
         controls.moveUp = pointer.worldY < this.paddle.y - epsilon;
         controls.moveDown = pointer.worldY > this.paddle.y + epsilon;
       }
+    }
+  },
+  setupTargets: function (midX, midY, imageName) {
+    // lay out the sprites of `imageName` about the given midX/Y params
+    var image = this.game.cache.getImage(imageName);
+    // lazy town
+    var level = [
+      [0,1,0,0,0,1,0,0,1,1,0,0,0],
+      [1,0,1,0,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,1,1,0,1,1,0,1,1,0],
+      [1,1,1,0,1,1,0,1,1,1,1,0,0],
+      [1,0,1,1,1,1,0,1,1,1,1,0,0],
+    ];
+    var rowLength = level[0].length;
+    var halfWidth = rowLength * image.width * 0.5;
+    var halfHeight = level.length * image.height * 0.5;
+    var y = 0;
+    for (var i = 0; i < level.length; i++) {
+      var row = level[i];
+      var x = 0;
+      for (var j = 0; j < row.length; j++) {
+        var index = row[j];
+        if (index != 0) {
+          var sprite = this.game.add.sprite(
+            x - halfWidth + midX,
+            y - halfHeight + midY,
+            imageName
+          );
+          this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+          sprite.body.immovable = true;
+          this.targetGroup.add(sprite);
+        }
+        x += image.width;
+      }
+      y += image.height;
     }
   }
 };
