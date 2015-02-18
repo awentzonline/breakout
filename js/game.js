@@ -131,10 +131,10 @@ GameOver.prototype = {
     this.titleText = this.game.add.text(this.game.world.centerX,100, 'Game Over!', style);
     this.titleText.anchor.setTo(0.5, 0.5);
 
-    this.congratsText = this.game.add.text(this.game.world.centerX, 200, 'You did not survive', { font: '32px Arial', fill: '#ffffff', align: 'center'});
+    this.congratsText = this.game.add.text(this.game.world.centerX, 200, 'You did not survive Business Simulator 2015', { font: '32px Arial', fill: '#ffffff', align: 'center'});
     this.congratsText.anchor.setTo(0.5, 0.5);
 
-    this.instructionText = this.game.add.text(this.game.world.centerX, 300, 'Click To Play Again', { font: '16px Arial', fill: '#ffffff', align: 'center'});
+    this.instructionText = this.game.add.text(this.game.world.centerX, 300, 'Click To Work Again', { font: '16px Arial', fill: '#ffffff', align: 'center'});
     this.instructionText.anchor.setTo(0.5, 0.5);
   },
   update: function () {
@@ -157,10 +157,10 @@ Menu.prototype = {
   create: function() {
     //var img = this.game.add.sprite(0, 0, 'title');
     var style = { font: '65px Arial', fill: '#ffffff', align: 'center'};
-    this.titleText = this.game.add.text(this.game.world.centerX, 300, 'Breakout', style);
+    this.titleText = this.game.add.text(this.game.world.centerX, 300, 'Business Simulator 2015', style);
     this.titleText.anchor.setTo(0.5, 0.5);
 
-    this.instructionsText = this.game.add.text(this.game.world.centerX, 400, 'Click anywhere to play', { font: '16px Arial', fill: '#ffffff', align: 'center'});
+    this.instructionsText = this.game.add.text(this.game.world.centerX, 400, 'Click anywhere to work', { font: '16px Arial', fill: '#ffffff', align: 'center'});
     this.instructionsText.anchor.setTo(0.5, 0.5);
   },
   update: function() {
@@ -195,6 +195,10 @@ Play.prototype = {
     this.terrain = this.game.add.tileSprite(0, 0, this.game.width, this.game.height, 'terrain0');
     this.terrain.fixedToCamera = true;
     
+    //
+    this.targetGroup = this.game.add.group();
+    this.setupTargets(400, 200, 'brick0');
+
     this.bouncer = new Bouncer(this.game, gameWidth * 0.5, gameHeight * 0.2, 'suit_walk');   
     this.bouncer.animations.add('idle', [0]);
     this.bouncer.animations.add('walk', [0,1,2,3,4,5,6,7]);
@@ -217,6 +221,8 @@ Play.prototype = {
     this.terrain.tilePosition.setTo(-this.camera.view.x, -this.camera.view.y);
 
     this.game.physics.arcade.collide(this.paddle, this.bouncer, this.bouncerOnPaddle.bind(this));
+    this.game.physics.arcade.collide(this.bouncer, this.targetGroup, this.bouncerOnTarget.bind(this));
+    this.game.debug.body(this.bouncer.body, 'rgba(255, 255, 0, 0.1)');
   },
   bouncerOnPaddle: function (paddle, bouncer) {
     var coneFactor = 0.8;
@@ -226,6 +232,9 @@ Play.prototype = {
     //dx = 1-dx;
     var angle = Math.PI * (coneFactor * dx - 0.5);
     this.bouncer.changeCourse(angle); 
+  },
+  bouncerOnTarget: function (bouncer, target) {
+    target.kill();
   },
   updateKeyControls: function () {
     var controls = this.paddle.controls;
@@ -252,6 +261,41 @@ Play.prototype = {
         controls.moveDown = pointer.worldY > this.paddle.y + epsilon;
       }
     }
+  },
+  setupTargets: function (midX, midY, imageName) {
+    // lay out the sprites of `imageName` about the given midX/Y params
+    var image = this.game.cache.getImage(imageName);
+    // lazy town
+    var level = [
+      [0,1,0,0,0,1,0,0,1,1,0,0,0],
+      [1,0,1,0,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,1,1,0,1,1,0,1,1,0],
+      [1,1,1,0,1,1,0,1,1,1,1,0,0],
+      [1,0,1,1,1,1,0,1,1,1,1,0,0],
+    ];
+    var rowLength = level[0].length;
+    var halfWidth = rowLength * image.width * 0.5;
+    var halfHeight = level.length * image.height * 0.5;
+    var y = 0;
+    for (var i = 0; i < level.length; i++) {
+      var row = level[i];
+      var x = 0;
+      for (var j = 0; j < row.length; j++) {
+        var index = row[j];
+        if (index != 0) {
+          var sprite = this.game.add.sprite(
+            x - halfWidth + midX,
+            y - halfHeight + midY,
+            imageName
+          );
+          this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+          sprite.body.immovable = true;
+          this.targetGroup.add(sprite);
+        }
+        x += image.width;
+      }
+      y += image.height;
+    }
   }
 };
 
@@ -275,6 +319,7 @@ Preload.prototype = {
     this.load.spritesheet('suit_walk', 'assets/suit_walk_top.png', 177, 100, 8);
     this.load.image('terrain0', 'assets/ground_cobblestone4.jpg');
     this.load.image('paddle0', 'assets/paddle0.jpg');
+    this.load.image('brick0', 'assets/brick0.jpg');
   },
   create: function() {
     this.asset.cropEnabled = false;
